@@ -69,7 +69,7 @@ export default function AllergyScreen() {
                     className="w-44 bg-pink-300 py-4 rounded-3xl items-center mb-5"
                     onPress={() => {
                         completeOnboarding();
-                        router.replace('/home');}}
+                        router.push('/(tabs)/main');}}
                 >
                     <Text className="text-white text-lg font-bold">온보딩 완료 </Text>
                 </TouchableOpacity>

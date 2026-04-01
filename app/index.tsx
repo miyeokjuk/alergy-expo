@@ -1,4 +1,4 @@
-import { Text, View, Alert } from 'react-native';
+import {Text, View, Alert, TouchableOpacity} from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as AppleAuthentication from 'expo-apple-authentication'; // 애플 로그인 기능 불러오기!
@@ -43,6 +43,13 @@ export default function LoginScreen() {
                 style={{ width: '100%', height: 50 }}
                 onPress={handleAppleLogin}
             />
+            <TouchableOpacity
+                className="w-44 bg-pink-300 py-4 rounded-3xl items-center mb-5"
+                onPress={() => {
+                    router.push('/main');}}
+            >
+                <Text className="text-white text-lg font-bold">바로 메인 </Text>
+            </TouchableOpacity>
         </SafeAreaView>
     );
 }
