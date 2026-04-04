@@ -8,12 +8,14 @@ interface AppState {
     school: string;
     allergies: string[];
     hasCompletedOnboarding: boolean;
+    _hasHydrated: boolean;
 
     setLoggedIn: (status: boolean) => void;
     setLanguage: (lang: string) => void;
     setSchool: (school: string) => void;
     setAllergies: (allergies: string[]) => void;
     completeOnboarding: () => void;
+    setHasHydrated: (status: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -24,16 +26,20 @@ export const useAppStore = create<AppState>()(
             school: '',
             allergies: [],
             hasCompletedOnboarding: false,
-
+            _hasHydrated: false,
             setLoggedIn: (status) => set({ isLoggedIn: status }),
             setLanguage: (lang) => set({ language: lang }),
             setSchool: (school) => set({ school }),
             setAllergies: (allergies) => set({ allergies }),
             completeOnboarding: () => set({ hasCompletedOnboarding: true }),
+            setHasHydrated: (status) => set({ _hasHydrated: status }),
         }),
         {
             name: 'allergy-app-storage', // 기기에 저장될 파일명
             storage: createJSONStorage(() => AsyncStorage), // AsyncStorage를 통해 영구 저장
+            onRehydrateStorage: () => (state) => {
+                state?.setHasHydrated(true);
+            },
         }
     )
 );

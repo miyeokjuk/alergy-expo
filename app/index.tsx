@@ -3,8 +3,10 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as AppleAuthentication from 'expo-apple-authentication'; // 애플 로그인 기능 불러오기!
 import './global.css';
-export default function LoginScreen() {
+import {useAppStore} from "@/store/useAppStore";
 
+export default function LoginScreen() {
+    const {setLoggedIn, hasCompletedOnboarding}=useAppStore();
     // 애플 로그인 버튼 핸들
     const handleAppleLogin = async () => {
         try {
@@ -14,10 +16,11 @@ export default function LoginScreen() {
                     AppleAuthentication.AppleAuthenticationScope.EMAIL,
                 ],
             });
-            // 로그인이 성공 시 수행
-            console.log('애플 로그인 성공. 정보:', credential);
-            router.push('/onboarding/language');
-
+            // 로그인이 성공 시
+            if(credential.user) {
+                console.log('애플 로그인 성공. 정보:', credential);
+                setLoggedIn(true);
+            }
         } catch (e: any) {
             if (e.code === 'ERR_REQUEST_CANCELED') {
                 console.log('유저가 로그인 창을 닫았습니다.');
@@ -46,10 +49,11 @@ export default function LoginScreen() {
             <TouchableOpacity
                 className="w-44 bg-pink-300 py-4 rounded-3xl items-center mb-5"
                 onPress={() => {
-                    router.push('/main');}}
+                    console.log(hasCompletedOnboarding)}}
             >
-                <Text className="text-white text-lg font-bold">바로 메인 </Text>
+                <Text className="text-white text-lg font-bold">온보딩상태 </Text>
             </TouchableOpacity>
+
         </SafeAreaView>
     );
 }

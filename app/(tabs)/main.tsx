@@ -3,14 +3,15 @@ import { Text, TouchableOpacity, View, ScrollView, Dimensions } from 'react-nati
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import '../global.css';
+import {useAppStore} from "@/store/useAppStore";
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
 export default function HomeScreen() {
     const scrollViewRef = useRef<ScrollView>(null);
-
+    const {isLoggedIn,setLoggedIn,hasCompletedOnboarding} = useAppStore();
     const today = new Date();
-    const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const todayString:string = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     const [selectedDate, setSelectedDate] = useState(todayString);
 
     const weekDates = useMemo(() => {
@@ -51,7 +52,7 @@ export default function HomeScreen() {
             }, 100);
         }
     }, [todayString, weekDates]);
-
+    console.log(hasCompletedOnboarding);
     return (
         <SafeAreaView className="flex-1 bg-white pt-5">
             <View className="px-5 items-center mb-6">
@@ -105,9 +106,12 @@ export default function HomeScreen() {
             <View className="px-5 pb-5">
                 <TouchableOpacity
                     className="bg-gray-200 py-4 rounded-xl items-center active:opacity-70"
-                    onPress={() => router.back()}
+                    onPress={() => {
+                        setLoggedIn(false);
+                        console.log("isLoggedIn:",isLoggedIn);
+                    }}
                 >
-                    <Text className="text-gray-700 text-lg font-bold">뒤로 가기</Text>
+                    <Text className="text-gray-700 text-lg font-bold">로그아웃</Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
