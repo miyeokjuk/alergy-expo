@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "alergy-expo",
-    "slug": "alergy-expo",
+    "name": "allergy-expo",
+    "slug": "allergy-expo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "alergyexpo",
+    "scheme": "allergyexpo",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
