@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '../../store/useAppStore';
 
-const SCHOOLS = ['서울대학교', '연세대학교', '고려대학교', 'KAIST'];
+const SCHOOLS = ['금오공과대학교', '서울대학교', '부산대학교', '경북대학교'];
 
 export default function SchoolScreen() {
     const { school, setSchool } = useAppStore();
