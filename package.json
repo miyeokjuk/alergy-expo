@@ -8,7 +8,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "setup": "cp .env.example .env && echo '.env 파일이 생성되었습니다. 실제 값을 입력해주세요.'"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

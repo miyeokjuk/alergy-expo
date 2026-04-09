@@ -1,50 +1,39 @@
-# Welcome to your Expo app 👋
+# Allegy-Project - FrontEnd
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+# * 현재 ios 시뮬레이터에서만 작동 -0409
 
-## Get started
+외국인 유학생들을 위한 대학 식단 알러지 필터링 서비스의 프론트엔드 레포지토리입니다.
 
-1. Install dependencies
+##  기술 스택
+- **Framework:** React Native (Expo Router)
+- **Language:** TypeScript
+- **State Management:** Zustand
+- **Styling:** Tailwind CSS (NativeWind)
+- **Authentication:** Google Social Login (Expo Dev Client)
+---
 
-   ```bash
-   npm install
-   ```
+##  실행 가이드 
+### 0. env 값 요청하기
+### 1.  프로그램 설치
+Xcode 시뮬레이터 또는 Android Studio 에뮬레이터 
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+### 2. 패키지 설치
+터미널을 열고 아래 명령어를 순서대로 실행하세요.
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+```bash
+# 해당 명령어로 .env.example파일 생성
+# .env로 변경 후 나머지 코드 부분에 실제 값 넣기 
+npm run setup
+```
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+# iOS 시뮬레이터용 빌드 및 실행
+npx expo run:ios
+```
+```bash
+# 안드로이드 에뮬레이터용 빌드 및 실행
+npx expo run:android
+```

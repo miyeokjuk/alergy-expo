@@ -48,7 +48,7 @@ export default function LoginScreen() {
     };
 
 
-    // // 애플 로그인 로직
+    // 애플 로그인 로직
     // const handleAppleLogin = async () => {
     //     try {
     //         const credential = await AppleAuthentication.signInAsync({

@@ -2,24 +2,8 @@ import { Text, View, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '../../store/useAppStore';
+import {ALLERGY_LIST} from '@/constants/allergyList';
 
-const ALLERGY_LIST = [
-    { id: "peanut", icon: "🥜", name: "땅콩", nameEn: "Peanut" },
-    { id: "treenut", icon: "🌰", name: "견과류", nameEn: "Tree Nuts" },
-    { id: "soy", icon: "🫘", name: "대두/콩", nameEn: "Soy" },
-    { id: "wheat", icon: "🌾", name: "밀", nameEn: "Wheat" },
-    { id: "buckwheat", icon: "🍜", name: "메밀", nameEn: "Buckwheat" },
-    { id: "sesame", icon: "🫚", name: "참깨", nameEn: "Sesame" },
-    { id: "peach", icon: "🍑", name: "복숭아", nameEn: "Peach" },
-    { id: "milk", icon: "🥛", name: "우유", nameEn: "Milk/Dairy" },
-    { id: "egg", icon: "🥚", name: "계란", nameEn: "Egg" },
-    { id: "fish", icon: "🐟", name: "생선", nameEn: "Fish" },
-    { id: "shellfish", icon: "🦐", name: "갑각류", nameEn: "Shellfish" },
-    { id: "mollusk", icon: "🦑", name: "연체류", nameEn: "Mollusks" },
-    { id: "pork", icon: "🐷", name: "돼지고기", nameEn: "Pork" },
-    { id: "beef", icon: "🐄", name: "쇠고기", nameEn: "Beef" },
-    { id: "spicy", icon: "🌶️", name: "매운 음식", nameEn: "Spicy Food" },
-];
 
 interface AllergyProps {
     buttonText: string;        // "다음" 또는 "저장 완료"
@@ -27,13 +11,13 @@ interface AllergyProps {
 }
 
 export default function AllergyScreen({buttonText,onPress}:AllergyProps) {
-    const { allergies, setAllergies, completeOnboarding } = useAppStore();
+    const { allergies, setAllergies } = useAppStore();
 
-    const toggleAllergy = (icon: string) => {
-        if (allergies.includes(icon)) {
-            setAllergies(allergies.filter((a) => a !== icon)); // 이미 있으면 뺌
+    const toggleAllergy = (selectedIcon: string) => {
+        if (allergies.includes(selectedIcon)) {
+            setAllergies(allergies.filter((a) => a !== selectedIcon)); // 이미 있으면 뺌
         } else {
-            setAllergies([...allergies, icon]); // 없으면 추가
+            setAllergies([...allergies, selectedIcon]); // 없으면 추가
         }
     };
 
@@ -48,7 +32,7 @@ export default function AllergyScreen({buttonText,onPress}:AllergyProps) {
                         const isSelected = allergies.includes(allergy.icon);
                         return (
                             <TouchableOpacity
-                                key={allergy.icon}
+                                key={allergy.id}
                                 className={`w-[30%]  aspect-square flex-row items-center justify-center p-2 rounded-2xl border-2 relative ${
                                     isSelected ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-white'
                                 }`}
