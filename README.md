@@ -1,6 +1,6 @@
 # Allegy-Project - FrontEnd
 
-# * 현재 ios 시뮬레이터에서만 작동 -0409
+
 
 외국인 유학생들을 위한 대학 식단 알러지 필터링 서비스의 프론트엔드 레포지토리입니다.
 
@@ -14,7 +14,12 @@
 
 ##  실행 가이드 
 ### 0. env 값 요청하기
-### 1.  프로그램 설치
+#### 0-a. android 빌드 시 SHA-1 값 알려주기 (구글 클라우드 등록)
+```bash
+# SHA-1 값 추출 (eg SHA1: 5E:8F:...)
+cd android
+./gradlew signingReport
+```
 Xcode 시뮬레이터 또는 Android Studio 에뮬레이터 
 
 ### 2. 패키지 설치
