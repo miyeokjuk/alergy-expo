@@ -10,7 +10,8 @@ const LANGUAGES = [
 ];
 
 export default function LanguageScreen() {
-    const { language, setLanguage } = useAppStore();
+    const language = useAppStore((state) => state.language);
+    const setLanguage = useAppStore((state) => state.setLanguage);
 
     return (
         <SafeAreaView className="flex-1 bg-white px-5 pt-10">

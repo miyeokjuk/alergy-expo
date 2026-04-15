@@ -6,7 +6,8 @@ import { useAppStore } from '../../store/useAppStore';
 const SCHOOLS = ['금오공과대학교', '서울대학교', '부산대학교', '경북대학교'];
 
 export default function SchoolScreen() {
-    const { school, setSchool } = useAppStore();
+    const school = useAppStore((state) => state.school);
+    const setSchool = useAppStore((state) => state.setSchool);
 
     return (
         <SafeAreaView className="flex-1 bg-white px-5 pt-10">

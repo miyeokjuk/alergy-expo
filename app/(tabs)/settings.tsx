@@ -11,7 +11,7 @@ const SETTINGS_MENU = [
 ];
 
 export default function SettingsScreen() {
-    const { setLoggedIn } = useAppStore();
+    const setLoggedIn = useAppStore((state) => state.setLoggedIn);
     return (
         <SafeAreaView className="flex-1 bg-white">
             <View className="px-5 py-6">

@@ -4,10 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin'; // 구글 로그인
 import { useAppStore } from "@/store/useAppStore";
 import './global.css';
+import {loginWithGoogleToken} from "@/api/auth";
 
 export default function LoginScreen() {
-    const { setLoggedIn } = useAppStore();
-
+    const setLoggedIn = useAppStore((state) => state.setLoggedIn);
+    const completeOnboarding = useAppStore((state) => state.completeOnboarding);
     useEffect(() => {
         GoogleSignin.configure({
             webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID,
@@ -15,38 +16,27 @@ export default function LoginScreen() {
         });
     }, []);
 
-    // 구글 로그인 버튼 함수
     const handleGoogleLogin = async () => {
         try {
-            // 구글 플레이 서비스가 가능한지 확인
             await GoogleSignin.hasPlayServices();
-
-            // 로그인 창 띄우기
             const userInfo = await GoogleSignin.signIn();
-
-            console.log('구글 로그인 성공');
             const idToken = userInfo?.data?.idToken;
 
-            // 토큰 확인 후 메인 화면으로 이동
             if (idToken) {
-                console.log(' id 토큰:', idToken);
+                console.log('구글 id 토큰 발급 완료, 서버로 전송');
+                await loginWithGoogleToken(idToken);
                 setLoggedIn(true);
             }
-
         } catch (error: any) {
             if (error.code === statusCodes.SIGN_IN_CANCELLED) {
                 console.log('유저가 로그인 창을 닫았습니다.');
-            } else if (error.code === statusCodes.IN_PROGRESS) {
-                console.log('이미 로그인이 진행 중입니다.');
-            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-                Alert.alert('오류', '구글 플레이 서비스가 불가능합니다.');
-            } else {
-                Alert.alert('로그인 실패', '구글 로그인 중 알 수 없는 오류가 발생했습니다.');
+            }
+            else {
+                Alert.alert('로그인 실패', error.message || '처리 중 오류가 발생했습니다.');
                 console.error('로그인 에러:', error);
             }
         }
     };
-
 
     // 애플 로그인 로직
     // const handleAppleLogin = async () => {
@@ -95,6 +85,22 @@ export default function LoginScreen() {
                     <Text className="text-gray-900 font-semibold text-base">
                         <Text className="text-gray-900 font-bold text-xl ">Google </Text>
                         계정으로 시작하기
+                    </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={()=>setLoggedIn(true)}
+                    className="w-full h-[50px] bg-white border border-gray-300 rounded-2xl flex-row justify-center items-center active:bg-gray-400"
+                >
+                    <Text className="text-gray-900 font-semibold text-base">
+                        그냥 들어가기 (개발용)
+                    </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={()=>completeOnboarding()}
+                    className="w-full h-[50px] bg-white border border-gray-300 rounded-2xl flex-row justify-center items-center active:bg-gray-400"
+                >
+                    <Text className="text-gray-900 font-semibold text-base">
+                        온보딩 해제하기
                     </Text>
                 </TouchableOpacity>
             </View>
