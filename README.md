@@ -4,6 +4,9 @@
 
 외국인 유학생들을 위한 대학 식단 알러지 필터링 서비스의 프론트엔드 레포지토리입니다.
 
+## 📍 (04/15) 구글 로그인 토근 통신 작업 중
+ 개발자 버튼을 이용해주세요.
+
 ##  기술 스택
 - **Framework:** React Native (Expo Router)
 - **Language:** TypeScript
