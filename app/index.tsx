@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Text, View, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import DeviceInfo from 'react-native-device-info';
 import { useAppStore } from "@/store/useAppStore";
 import './global.css';
 import {loginWithGoogleToken} from "@/api/auth";
@@ -22,9 +23,13 @@ export default function LoginScreen() {
             const userInfo = await GoogleSignin.signIn();
             const idToken = userInfo?.data?.idToken;
 
+            // 구글 토큰 발급 후
             if (idToken) {
+                const deviceId = await DeviceInfo.getUniqueId();
+                console.log('deviceId acquired: ', deviceId);
+                console.log('idToken: ', idToken);
                 console.log('Google ID token acquired, sending to server');
-                await loginWithGoogleToken(idToken);
+                await loginWithGoogleToken(idToken, deviceId);
                 setLoggedIn(true);
             }
         } catch (error: any) {

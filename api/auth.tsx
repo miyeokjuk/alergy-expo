@@ -1,28 +1,55 @@
 import * as SecureStore from 'expo-secure-store';
+
+
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
 
-export const loginWithGoogleToken = async (idToken: string) => {
+interface AuthData {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    refreshExpiresIn: number;
+    onboardingCompleted: boolean;
+}
 
-    // ⭐️ 토큰을 헤더에 담음
-    const response = await fetch(`${API_URL}/api/auth/google/login`, {
+interface ErrorResponse {
+    success: string;
+    code: string;
+    msg: string;
+}
+
+interface LoginResponse {
+    success: string; // boolean 아님
+    data: AuthData;
+}
+
+export const loginWithGoogleToken = async (idToken: string, deviceId: string) => {
+
+    // ⭐️ 토큰을 body에 담아 전송
+    const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`,
         },
+        body: JSON.stringify({
+            idToken,
+            deviceId,
+        }),
     });
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.message ?? `서버 응답 오류: ${response.status}`;
+        const errorData = await response.json().catch(() => ({})) as ErrorResponse;
+        const baseMessage = errorData.msg ?? `서버 응답 오류: ${response.status}`;
+        const errorMessage = errorData.code
+            ? `[${errorData.code}] ${baseMessage}`
+            : baseMessage;
         throw new Error(errorMessage);
     }
 
     // JWT 받기
-    const data = await response.json();
-    const { accessToken, refreshToken } = data;
+    const result = await response.json() as LoginResponse;
+    const { accessToken, refreshToken } = result.data;
 
     if (!accessToken) {
-        throw new Error('서버에서 토큰을 받지 못했습니다.');
+        throw new Error('서버에서 토큰을 받지 못했습니다. 다시 시도해 주세요');
     }
 
     await SecureStore.setItemAsync('accessToken', accessToken);
@@ -30,7 +57,7 @@ export const loginWithGoogleToken = async (idToken: string) => {
         await SecureStore.setItemAsync('refreshToken', refreshToken);
     }
     console.log('JWT 발급 완료');
-    return data;
+    return result.data;
 };
 
 export const verifyAndRestoreSession = async (): Promise<boolean> => {

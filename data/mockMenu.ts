@@ -361,7 +361,7 @@ export const mockMenuByWeekday: Record<Weekday, Record<CafeteriaId, MealMenu>> =
     월: {
         a1: {
             breakfast: ['토스트', '삶은 달걀', '바나나', '우유'],
-            lunch: ['김치볶음밥', '미소된장국', '닭강정', '샐러드'],
+            lunch: ['김치볶음밥', '미소된장국', '닭강정', '샐러드','김치','연두부','간장'],
             dinner: ['제육덮밥', '어묵국', '깍두기', '요거트'],
         },
         b2: {
