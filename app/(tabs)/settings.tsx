@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {useAppStore} from "@/store/useAppStore";
 import { ActionButton } from '@/components/ui/action-button';
 import * as SecureStore from 'expo-secure-store';
+import { logoutFromServer } from '@/api/auth';
 const SETTINGS_MENU = [
     { id: 'country', title: 'Country Settings', icon: 'earth-outline', path: '/settings/country' },
     { id: 'school', title: 'School Settings', icon: 'school-outline', path: '/settings/school' },
@@ -18,6 +19,7 @@ export default function SettingsScreen() {
 
     const handleLogout = async () => {
         try {
+            await logoutFromServer();
             await SecureStore.deleteItemAsync('accessToken');
             await SecureStore.deleteItemAsync('refreshToken');
         } finally {
