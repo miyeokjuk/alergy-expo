@@ -9,8 +9,8 @@ export type MealMenu = {
 };
 
 export const cafeterias: { id: CafeteriaId; name: string }[] = [
-    { name: '학생식당', id: 'a1' },
-    { name: '교직원식당', id: 'b2' },
+    { name: '일품식당', id: 'a1' },
+    { name: '정찬식당', id: 'b2' },
     { name: '분식당', id: 'c3' },
 ];
 

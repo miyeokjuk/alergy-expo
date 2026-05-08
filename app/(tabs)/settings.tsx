@@ -38,7 +38,7 @@ export default function SettingsScreen() {
             const dateStr = `${yyyy}-${mm}-${dd}`;
             console.log('[weekly-meals] 요청: cafeteriaId=1, weekStartDate=', dateStr);
 
-            const response = await getWeeklyMeals(1, dateStr);
+            const response = await getWeeklyMeals(4, dateStr);
             console.log('[weekly-meals] response =', JSON.stringify(response, null, 2));
         } catch (error) {
             console.warn('[weekly-meals] 호출 실패:', error);

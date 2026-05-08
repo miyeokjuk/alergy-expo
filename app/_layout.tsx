@@ -6,7 +6,6 @@ import * as SecureStore from 'expo-secure-store';
 import { useAppStore } from '../store/useAppStore';
 import { verifyAndRestoreSession } from '@/api/auth';
 import { setOnAuthExpired } from '@/api/client';
-import { getCafeterias } from '@/api/cafeteria';
 
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
@@ -60,14 +59,6 @@ export default function RootLayout() {
                             console.log('서버 설정 동기화 완료');
                         } catch (hydrateError) {
                             console.warn('서버 설정 동기화 실패:', hydrateError);
-                        }
-
-                        // 디버그: 식당 목록 조회 응답 구조 확인용
-                        try {
-                            const cafeteriasResponse = await getCafeterias();
-                            console.log('[cafeterias] response =', JSON.stringify(cafeteriasResponse, null, 2));
-                        } catch (cafeteriaError) {
-                            console.warn('[cafeterias] 호출 실패:', cafeteriaError);
                         }
                     }
                 } else {
