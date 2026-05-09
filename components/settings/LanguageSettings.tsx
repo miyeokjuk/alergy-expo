@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Text, View, TouchableOpacity } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/useAppStore';
 import { getLanguageSetting, updateLanguageSetting, getLanguageOptions } from '@/api/settings';
 
@@ -32,6 +32,7 @@ export default function LanguageSettings({
 }: LanguageSettingsProps) {
     const language = useAppStore((state) => state.language);
     const setLanguage = useAppStore((state) => state.setLanguage);
+    const queryClient = useQueryClient();
     const [isSyncing, setIsSyncing] = useState(false);
 
     const { data: languageOptionsResponse } = useQuery({
@@ -95,6 +96,9 @@ export default function LanguageSettings({
         try {
             setIsSyncing(true);
             await updateLanguageSetting(code);
+            // 언어 변경 후 모든 server-backed 쿼리 무효화 → 새 언어로 자동 refetch
+            // (메인의 weekly-meals, 상세의 menuDetail, 옵션 리스트 등)
+            queryClient.invalidateQueries();
         } catch (error: any) {
             setLanguage(previousLanguage);
             Alert.alert('Language update failed', error?.message ?? 'Please try again.');

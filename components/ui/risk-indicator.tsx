@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { RiskLevel } from '@/data/mockMenu';
+import type { RiskLevel } from '@/api/cafeteria';
 
 interface RiskIndicatorProps {
     level: RiskLevel | null;
@@ -28,6 +28,7 @@ export function RiskIndicator({ level }: RiskIndicatorProps) {
             </View>
         );
     }
-    // 알러지 매칭 없음 → 안전 표시
-    return <Ionicons name="checkmark-circle" size={20} color="#16a34a" />;
+    // UNKNOWN 또는 정보 없음 → 회색 ? 아이콘
+    // (HIGH/MEDIUM/LOW는 서버가 명시적으로 전달. 그 외엔 "분석되지 않음" 상태)
+    return <Ionicons name="help-circle" size={20} color="#9CA3AF" />;
 }

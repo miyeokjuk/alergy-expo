@@ -1,18 +1,22 @@
-import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
-import { Text, TouchableOpacity, View, ScrollView, Dimensions } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Text, TouchableOpacity, View, ScrollView, Dimensions, Animated } from 'react-native';
+import { router, useNavigation } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
+import PagerView, {
+    type PagerViewOnPageScrollEventData,
+    type PagerViewOnPageSelectedEventData,
+} from 'react-native-pager-view';
 import '../global.css';
 import { useAppStore } from '@/store/useAppStore';
 import { normalizeAllergyValue } from '@/constants/allergyList';
 import { RiskIndicator } from '@/components/ui/risk-indicator';
+import { SpicyLevel } from '@/components/ui/spicy-level';
 import {
     getCafeterias,
     getWeeklyMeals,
     mapServerRiskLevel,
     MEAL_TYPE_LABEL,
-    MEAL_TYPE_ORDER,
     type ServerMealSchedule,
 } from '@/api/cafeteria';
 
@@ -42,6 +46,11 @@ const DISPLAY_DAY_NAMES: Record<string, string> = {
     토: 'Sat',
 };
 
+// 끼니 탭 (왼→오: Breakfast → Lunch → Dinner). Lunch가 디폴트(인덱스 1).
+const MEAL_TYPES: readonly string[] = ['BREAKFAST', 'LUNCH', 'DINNER'] as const;
+const DEFAULT_MEAL_INDEX = 1;
+const TAB_BAR_HORIZONTAL_PADDING = 20;
+
 function formatDate(date: Date): string {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -52,7 +61,7 @@ function formatDate(date: Date): string {
 function getMondayOfWeek(date: Date): string {
     const d = new Date(date);
     const day = d.getDay();
-    const diff = day === 0 ? -6 : 1 - day; // 일요일(0)이면 직전 월요일까지 -6
+    const diff = day === 0 ? -6 : 1 - day;
     d.setDate(d.getDate() + diff);
     return formatDate(d);
 }
@@ -76,7 +85,7 @@ export default function HomeScreen() {
     const { data: cafeteriasResponse } = useQuery({
         queryKey: ['cafeterias'],
         queryFn: getCafeterias,
-        staleTime: 1000 * 60 * 60, // 1h
+        staleTime: 1000 * 60 * 60,
     });
 
     const displayedCafeterias: DisplayedCafeteria[] = useMemo(() => {
@@ -107,17 +116,20 @@ export default function HomeScreen() {
         queryKey: ['weeklyMeals', selectedCafeteriaId, weekStartDate],
         queryFn: () => getWeeklyMeals(selectedCafeteriaId as number, weekStartDate),
         enabled: selectedCafeteriaId !== null,
-        staleTime: 1000 * 60 * 10, // 10분
+        staleTime: 1000 * 60 * 10,
     });
 
-    const schedulesForSelectedDate = useMemo<ServerMealSchedule[]>(() => {
+    // 선택된 날짜의 mealType별 schedule 매핑
+    const schedulesByMealType = useMemo<Record<string, ServerMealSchedule | undefined>>(() => {
         const all = weeklyMealsResponse?.data?.mealSchedules ?? [];
-        return [...all]
-            .filter((s) => s.mealDate === selectedDate)
-            .sort((a, b) => (MEAL_TYPE_ORDER[a.mealType] ?? 99) - (MEAL_TYPE_ORDER[b.mealType] ?? 99));
+        const result: Record<string, ServerMealSchedule | undefined> = {};
+        for (const mealType of MEAL_TYPES) {
+            result[mealType] = all.find((s) => s.mealDate === selectedDate && s.mealType === mealType);
+        }
+        return result;
     }, [weeklyMealsResponse, selectedDate]);
 
-    // 날짜 버튼용 (월~일 7일치)
+    // 날짜 버튼 (월~일 7일치)
     const weekDates = useMemo(() => {
         const dates = [];
         const currentDay = today.getDay();
@@ -139,27 +151,42 @@ export default function HomeScreen() {
         return dates;
     }, [today]);
 
-    // 메인으로 복귀 시 오늘 날짜로 스크롤
+    const navigation = useNavigation();
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    useFocusEffect(
-        useCallback(() => {
+
+    // 오늘 날짜 위치로 가로 스크롤하는 공용 헬퍼
+    const scrollDateListToToday = (animated: boolean) => {
+        const todayIndex = weekDates.findIndex((item) => item.id === todayString);
+        if (todayIndex < 0) return;
+        timerRef.current = setTimeout(() => {
+            const screenWidth = Dimensions.get('window').width;
+            const itemWidth = 90;
+            const offset = todayIndex * itemWidth - screenWidth / 2 + itemWidth / 2 + 20;
+            dateScrollRef.current?.scrollTo({ x: offset, animated });
+        }, 100);
+    };
+
+    // 첫 마운트 시 한 번만 — 오늘 날짜 위치로 즉시(애니메이션 없이) 스크롤
+    useEffect(() => {
+        scrollDateListToToday(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // 탭 전환 시(다른 탭에서 메뉴 탭으로 올 때)만 오늘 날짜로 초기화 + 스크롤
+    // meal-detail에서 뒤로가기로 돌아올 때는 'tabPress'가 발생하지 않으므로 영향 없음
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('tabPress' as never, () => {
             setSelectedDate(todayString);
-            const todayIndex = weekDates.findIndex((item) => item.id === todayString);
-            if (todayIndex >= 0) {
-                timerRef.current = setTimeout(() => {
-                    const screenWidth = Dimensions.get('window').width;
-                    const itemWidth = 90;
-                    const offset = todayIndex * itemWidth - screenWidth / 2 + itemWidth / 2 + 20;
-                    dateScrollRef.current?.scrollTo({ x: offset, animated: true });
-                }, 100);
+            scrollDateListToToday(true);
+        });
+        return () => {
+            unsubscribe();
+            if (timerRef.current) {
+                clearTimeout(timerRef.current);
             }
-            return () => {
-                if (timerRef.current) {
-                    clearTimeout(timerRef.current);
-                }
-            };
-        }, [todayString, weekDates])
-    );
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [navigation, todayString, weekDates]);
 
     const handleDatePress = (newDateId: string) => {
         const newIndex = weekDates.findIndex((item) => item.id === newDateId);
@@ -172,6 +199,36 @@ export default function HomeScreen() {
         dateScrollRef.current?.scrollTo({ x: offset, animated: true });
         setSelectedDate(newDateId);
     };
+
+    // ─── 끼니 페이저 + 슬라이딩 밑줄 ───
+    const pagerRef = useRef<PagerView>(null);
+    const [activeMealIndex, setActiveMealIndex] = useState(DEFAULT_MEAL_INDEX);
+    const scrollOffset = useRef(new Animated.Value(DEFAULT_MEAL_INDEX)).current;
+
+    // 탭바 폭 측정. 화면폭 - 좌우 padding(20*2).
+    const [tabBarWidth, setTabBarWidth] = useState(
+        Dimensions.get('window').width - TAB_BAR_HORIZONTAL_PADDING * 2
+    );
+    const tabWidth = tabBarWidth / MEAL_TYPES.length;
+
+    const onPageScroll = (e: { nativeEvent: PagerViewOnPageScrollEventData }) => {
+        const { position, offset } = e.nativeEvent;
+        scrollOffset.setValue(position + offset);
+    };
+
+    const onPageSelected = (e: { nativeEvent: PagerViewOnPageSelectedEventData }) => {
+        setActiveMealIndex(e.nativeEvent.position);
+    };
+
+    const handleTabPress = (index: number) => {
+        pagerRef.current?.setPage(index);
+    };
+
+    const indicatorTranslateX = scrollOffset.interpolate({
+        inputRange: MEAL_TYPES.map((_, i) => i),
+        outputRange: MEAL_TYPES.map((_, i) => i * tabWidth),
+        extrapolate: 'clamp',
+    });
 
     return (
         <SafeAreaView className="flex-1 bg-white pt-5">
@@ -219,7 +276,7 @@ export default function HomeScreen() {
                 </ScrollView>
             </View>
 
-            <View className="mb-6">
+            <View className="mb-4">
                 <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -244,64 +301,116 @@ export default function HomeScreen() {
                 </ScrollView>
             </View>
 
-            <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 24 }}>
-                {schedulesForSelectedDate.length === 0 ? (
-                    <View className="rounded-3xl border border-dashed border-gray-300 bg-gray-50 px-5 py-10 items-center">
-                        <Text className="text-gray-700 text-lg font-bold">식당 미운영</Text>
-                        <Text className="text-gray-400 text-sm mt-2">
-                            {isWeeklyFetching ? 'Loading...' : 'No meals scheduled for this date'}
-                        </Text>
-                    </View>
-                ) : (
-                    <View className="gap-4">
-                        {schedulesForSelectedDate.map((schedule) => {
-                            const sortedMenus = [...schedule.menus].sort(
-                                (a, b) => a.displayOrder - b.displayOrder
-                            );
-                            return (
-                                <TouchableOpacity
-                                    key={schedule.mealType}
-                                    className="rounded-3xl border border-gray-200 bg-white px-5 py-4 active:bg-gray-50"
-                                    onPress={() =>
-                                        router.push({
-                                            pathname: '/meal-detail',
-                                            params: {
-                                                date: selectedDate,
-                                                cafeteriaId: String(selectedCafeteria?.cafeteriaId ?? ''),
-                                                cafeteriaName: selectedCafeteria?.name ?? '',
-                                                mealType: schedule.mealType,
-                                            },
-                                        })
-                                    }
+            {/* 끼니 탭 + 슬라이딩 밑줄 */}
+            <View
+                className="px-5"
+                onLayout={(e) => setTabBarWidth(e.nativeEvent.layout.width - TAB_BAR_HORIZONTAL_PADDING * 2)}
+            >
+                <View className="flex-row">
+                    {MEAL_TYPES.map((mealType, i) => {
+                        const isActive = activeMealIndex === i;
+                        return (
+                            <TouchableOpacity
+                                key={mealType}
+                                className="flex-1 items-center py-3"
+                                onPress={() => handleTabPress(i)}
+                            >
+                                <Text
+                                    className={`text-base ${
+                                        isActive ? 'font-bold text-gray-900' : 'font-semibold text-gray-400'
+                                    }`}
                                 >
-                                    <View className="flex-row items-center justify-between mb-3">
-                                        <Text className="text-xl font-bold text-gray-900">
-                                            {MEAL_TYPE_LABEL[schedule.mealType] ?? schedule.mealType}
+                                    {MEAL_TYPE_LABEL[mealType] ?? mealType}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+                <View className="h-0.5 bg-gray-100">
+                    <Animated.View
+                        style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            height: 2,
+                            width: tabWidth,
+                            backgroundColor: '#111827',
+                            transform: [{ translateX: indicatorTranslateX }],
+                        }}
+                    />
+                </View>
+            </View>
+
+            {/* 끼니별 페이저 */}
+            <PagerView
+                ref={pagerRef}
+                style={{ flex: 1 }}
+                initialPage={DEFAULT_MEAL_INDEX}
+                onPageScroll={onPageScroll}
+                onPageSelected={onPageSelected}
+            >
+                {MEAL_TYPES.map((mealType) => {
+                    const schedule = schedulesByMealType[mealType];
+                    const sortedMenus = schedule
+                        ? [...schedule.menus].sort((a, b) => a.displayOrder - b.displayOrder)
+                        : [];
+
+                    return (
+                        <View key={mealType} style={{ flex: 1 }}>
+                            <ScrollView
+                                className="flex-1"
+                                contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24 }}
+                            >
+                                {!schedule ? (
+                                    <View className="rounded-3xl border border-dashed border-gray-300 bg-gray-50 px-5 py-10 items-center">
+                                        <Text className="text-gray-700 text-lg font-bold">식당 미운영</Text>
+                                        <Text className="text-gray-400 text-sm mt-2">
+                                            {isWeeklyFetching ? 'Loading...' : 'No meals scheduled'}
                                         </Text>
-                                        <Text className="text-sm font-semibold text-gray-400">Details</Text>
                                     </View>
-                                    <View className="gap-2">
+                                ) : (
+                                    <View className="gap-3">
                                         {sortedMenus.map((menu) => {
-                                            const riskLevel = mapServerRiskLevel(menu.risk?.riskLevel);
+                                            const riskLevel = mapServerRiskLevel(menu.risk);
                                             return (
-                                                <View
+                                                <TouchableOpacity
                                                     key={menu.mealMenuId}
-                                                    className="rounded-2xl bg-gray-50 px-4 py-3 flex-row items-center justify-between"
+                                                    className="rounded-2xl bg-gray-50 px-4 py-3 active:bg-gray-100"
+                                                    onPress={() =>
+                                                        router.push({
+                                                            pathname: '/meal-detail',
+                                                            params: {
+                                                                mealMenuId: String(menu.mealMenuId),
+                                                                date: selectedDate,
+                                                                cafeteriaId: String(selectedCafeteria?.cafeteriaId ?? ''),
+                                                                cafeteriaName: selectedCafeteria?.name ?? '',
+                                                                mealType,
+                                                            },
+                                                        })
+                                                    }
                                                 >
-                                                    <Text className="text-base text-gray-700 flex-1 pr-3">
-                                                        {menu.menuName}
-                                                    </Text>
-                                                    <RiskIndicator level={riskLevel} />
-                                                </View>
+                                                    <View className="flex-row items-center justify-between">
+                                                        <Text
+                                                            className="text-base text-gray-800 font-semibold flex-1 pr-3"
+                                                            numberOfLines={2}
+                                                        >
+                                                            {menu.menuName}
+                                                            {menu.spicyLevel > 0 ? ' ' : ''}
+                                                            {menu.spicyLevel > 0 ? (
+                                                                <SpicyLevel level={menu.spicyLevel} />
+                                                            ) : null}
+                                                        </Text>
+                                                        <RiskIndicator level={riskLevel} />
+                                                    </View>
+                                                </TouchableOpacity>
                                             );
                                         })}
                                     </View>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-                )}
-            </ScrollView>
+                                )}
+                            </ScrollView>
+                        </View>
+                    );
+                })}
+            </PagerView>
         </SafeAreaView>
     );
 }
