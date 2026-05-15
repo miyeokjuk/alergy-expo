@@ -1,19 +1,22 @@
 import { useLocalSearchParams } from 'expo-router';
 import { Alert, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import ReviewsBottomSheet from '@/components/reviews-bottom-sheet';
 import ScreenHeader from '@/components/ui/screen-header';
 import { RiskIndicator } from '@/components/ui/risk-indicator';
 import {
     getMenuDetail,
     mapServerRiskLevel,
     toggleMenuLike,
-    MEAL_TYPE_LABEL,
     type ServerMenuDetail,
 } from '@/api/cafeteria';
 import type { SuccessResponse } from '@/api/client';
+import { getAllergyByCode } from '@/constants/allergyList';
+import { useTranslation, t as tFn } from '@/lib/i18n';
 
 type MenuDetailData = SuccessResponse<ServerMenuDetail> | undefined;
 
@@ -28,10 +31,12 @@ export default function MealDetailScreen() {
 
     const targetMealMenuId = parseInt(String(params.mealMenuId ?? ''), 10);
     const mealType = String(params.mealType ?? 'LUNCH');
-    const mealLabel = MEAL_TYPE_LABEL[mealType] ?? mealType;
+    const t = useTranslation();
+    const mealLabel = t(`meal.${mealType.toLowerCase()}`);
 
     const queryClient = useQueryClient();
     const queryKey = ['menuDetail', targetMealMenuId] as const;
+    const reviewsSheetRef = useRef<BottomSheetModal>(null);
 
     const { data: menuDetailResponse, isLoading } = useQuery({
         queryKey,
@@ -41,7 +46,11 @@ export default function MealDetailScreen() {
     });
 
     const menu = menuDetailResponse?.data ?? null;
-    const matchedSet = new Set(menu?.matchedAllergies ?? []);
+    // matchedAllergies가 객체 배열이라 코드만 추출해 Set 구성.
+    // ingredientCode가 있으면 그걸 우선, 없으면 allergyCode로 매칭 (ingredient.code와 비교)
+    const matchedSet = new Set(
+        (menu?.matchedAllergies ?? []).map((m) => m.ingredientCode ?? m.allergyCode)
+    );
 
     const liked = Boolean(menu?.like?.likedByMe);
     const likeCount = Number(menu?.like?.count) || 0;
@@ -50,7 +59,7 @@ export default function MealDetailScreen() {
     const [isTogglingLike, setIsTogglingLike] = useState(false);
 
     const showComingSoon = (label: string) =>
-        Alert.alert('Coming soon', `${label}는 준비 중입니다.`);
+        Alert.alert(tFn('common.comingSoon'), tFn('common.comingSoonMessage', { label }));
 
     const handleToggleLike = async () => {
         if (isTogglingLike) return;
@@ -96,7 +105,7 @@ export default function MealDetailScreen() {
                 if (!old) return old;
                 return { ...old, data: { ...old.data, like: oldLike } };
             });
-            Alert.alert('Like failed', error?.message ?? 'Please try again.');
+            Alert.alert(tFn('detail.likeFailed'), error?.message ?? tFn('common.tryAgain'));
         } finally {
             setIsTogglingLike(false);
         }
@@ -111,40 +120,20 @@ export default function MealDetailScreen() {
                     <View className="px-5 mt-10">
                         <View className="rounded-3xl border border-dashed border-gray-300 bg-gray-50 px-5 py-10 items-center">
                             <Text className="text-gray-700 text-lg font-bold">
-                                {isLoading ? 'Loading...' : '메뉴 정보를 찾을 수 없습니다'}
+                                {isLoading ? t('common.loading') : t('detail.notFound')}
                             </Text>
                         </View>
                     </View>
                 ) : (
                     <>
-                        {/* === 단일 카드 (헤더 + 콘텐츠 영역) === */}
+                        {/* === 카드 (콘텐츠만, 헤더 행 제거됨) === */}
                         <View
                             className="mx-4 mt-2 rounded-3xl bg-orange-50 px-6 py-8"
                             style={{ minHeight: 380 }}
                         >
-                            {/* Header row (계정행 스타일) */}
-                            <View className="flex-row items-center">
-                                <View className="w-12 h-12 rounded-full bg-white items-center justify-center">
-                                    <Text className="text-2xl">🍽️</Text>
-                                </View>
-                                <View className="flex-1 ml-3">
-                                    <Text
-                                        className="text-base font-semibold text-gray-900"
-                                        numberOfLines={1}
-                                    >
-                                        {menu.menuName}
-                                    </Text>
-                                    <Text className="text-xs text-gray-500" numberOfLines={1}>
-                                        {menu.cornerName}
-                                        {menu.cornerName ? ' · ' : ''}
-                                        {mealLabel}
-                                    </Text>
-                                </View>
-                            </View>
-
                             {/* 콘텐츠 영역 (구조화 레이아웃) */}
-                            <View className="mt-6" style={{ gap: 16 }}>
-                                {/* Row 1: menuName + spicyLevel | riskLevel */}
+                            <View style={{ gap: 16 }}>
+                                {/* Row 1: menuName + spicyLevel | riskLevel — 카드 맨 위 */}
                                 <View className="flex-row items-center">
                                     <Text
                                         className="text-xl font-bold text-gray-900 flex-1 pr-3"
@@ -165,14 +154,18 @@ export default function MealDetailScreen() {
                                     </Text>
                                 ) : null}
 
-                                {/* Row 3: ingredients (matchedAllergies는 빨간색 강조) */}
+                                {/* Row 3: ingredients ({code, source} 객체 배열).
+                                    matchedAllergies는 코드 배열이라 ingredient.code로 매칭 */}
                                 {menu.ingredients.length > 0 ? (
                                     <View className="flex-row flex-wrap" style={{ gap: 8 }}>
                                         {menu.ingredients.map((ingredient) => {
-                                            const isMatched = matchedSet.has(ingredient);
+                                            const isMatched = matchedSet.has(ingredient.code);
+                                            const label =
+                                                getAllergyByCode(ingredient.code)?.label ??
+                                                ingredient.code;
                                             return (
                                                 <View
-                                                    key={ingredient}
+                                                    key={ingredient.code}
                                                     className={`rounded-full px-3 py-1.5 border ${
                                                         isMatched
                                                             ? 'bg-red-100 border-red-300'
@@ -186,7 +179,7 @@ export default function MealDetailScreen() {
                                                                 : 'text-gray-700'
                                                         }
                                                     >
-                                                        {ingredient}
+                                                        {label}
                                                     </Text>
                                                 </View>
                                             );
@@ -215,7 +208,8 @@ export default function MealDetailScreen() {
                                 ) : null}
                             </TouchableOpacity>
                             <TouchableOpacity
-                                onPress={() => showComingSoon('Reviews')}
+                                onPress={() => reviewsSheetRef.current?.present()}
+                                disabled={!Number.isFinite(targetMealMenuId)}
                                 className="flex-row items-center"
                             >
                                 <Ionicons name="chatbubble-outline" size={26} color="#000" />
@@ -229,6 +223,9 @@ export default function MealDetailScreen() {
                     </>
                 )}
             </ScrollView>
+
+            {/* 리뷰 Bottom Sheet — Reviews 버튼 누르면 슬라이드 업 */}
+            <ReviewsBottomSheet ref={reviewsSheetRef} mealMenuId={targetMealMenuId} />
         </SafeAreaView>
     );
 }

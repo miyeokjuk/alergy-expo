@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from '@/store/useAppStore';
 import { SCHOOL_LIST, type SchoolItem } from '@/data/schoolList';
 import { getSchoolSetting, updateSchoolSetting, getSchoolOptions } from '@/api/settings';
+import { useTranslation, t as tFn } from '@/lib/i18n';
 
 interface SchoolSettingsProps {
     title?: string;
@@ -14,14 +15,17 @@ interface SchoolSettingsProps {
 }
 
 export default function SchoolSettings({
-    title = 'School',
-    subtitle = 'Select your school.',
+    title,
+    subtitle,
     showHeader = true,
     persistToServer = true,
 }: SchoolSettingsProps) {
+    const t = useTranslation();
     const schoolId = useAppStore((state) => state.schoolId);
     const setSchoolId = useAppStore((state) => state.setSchoolId);
     const [isSyncing, setIsSyncing] = useState(false);
+    const resolvedTitle = title ?? t('school.title');
+    const resolvedSubtitle = subtitle ?? t('school.subtitle');
 
     const { data: schoolOptionsResponse } = useQuery({
         queryKey: ['schoolOptions'],
@@ -94,7 +98,7 @@ export default function SchoolSettings({
             await updateSchoolSetting(nextSchoolId);
         } catch (error: any) {
             setSchoolId(previousSchoolId);
-            Alert.alert('School update failed', error?.message ?? 'Please try again.');
+            Alert.alert(tFn('school.updateFailed'), error?.message ?? tFn('common.tryAgain'));
         } finally {
             setIsSyncing(false);
         }
@@ -104,24 +108,24 @@ export default function SchoolSettings({
         <View className="px-5 pt-10">
             {showHeader ? (
                 <>
-                    <Text className="mb-2 text-3xl font-bold text-gray-900">{title}</Text>
-                    <Text className="mb-6 text-lg text-gray-500">{subtitle}</Text>
+                    <Text className="mb-2 text-3xl font-bold text-gray-900">{resolvedTitle}</Text>
+                    <Text className="mb-6 text-lg text-gray-500">{resolvedSubtitle}</Text>
                 </>
             ) : null}
 
             <View className="relative mb-6 rounded-[24px] border border-gray-200 bg-white px-4 py-5 pt-6">
                 <View className="absolute -top-3 left-4 rounded-full bg-white px-2">
-                    <Text className="text-sm font-semibold text-gray-500">selected school</Text>
+                    <Text className="text-sm font-semibold text-gray-500">{t('school.selectedHeader')}</Text>
                 </View>
                 {selectedSchool ? (
                     <View className="rounded-2xl bg-gray-50 px-4 py-3">
                         <Text className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                            School #{selectedSchool.id}
+                            {t('school.schoolNumber', { id: selectedSchool.id })}
                         </Text>
                         <Text className="mt-1 text-base font-semibold text-gray-900">{selectedSchool.label}</Text>
                     </View>
                 ) : (
-                    <Text className="text-sm text-gray-400">No school selected yet.</Text>
+                    <Text className="text-sm text-gray-400">{t('school.noneSelected')}</Text>
                 )}
             </View>
 
@@ -141,7 +145,7 @@ export default function SchoolSettings({
                             <View className="flex-row items-center">
                                 <View className="flex-1 pr-3">
                                     <Text className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                                        School #{school.id}
+                                        {t('school.schoolNumber', { id: school.id })}
                                     </Text>
                                     <Text className="mt-1 text-base font-semibold text-gray-900">{school.label}</Text>
                                 </View>

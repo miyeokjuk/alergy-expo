@@ -19,6 +19,7 @@ import {
 } from '@/data/countryList';
 import { Ionicons } from '@expo/vector-icons';
 import { getCountrySetting, updateCountrySetting, getCountryOptions } from '@/api/settings';
+import { useTranslation, t as tFn } from '@/lib/i18n';
 
 interface CountrySettingsProps {
     title?: string;
@@ -28,16 +29,19 @@ interface CountrySettingsProps {
 }
 
 export default function CountrySettings({
-    title = 'Country / Region',
-    subtitle = 'Choose your country or region.',
+    title,
+    subtitle,
     showHeader = true,
     persistToServer = true,
 }: CountrySettingsProps) {
+    const t = useTranslation();
     const country = useAppStore((state) => state.country);
     const setCountry = useAppStore((state) => state.setCountry);
     const [searchQuery, setSearchQuery] = useState('');
     const [isPickerOpen, setIsPickerOpen] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
+    const resolvedTitle = title ?? t('country.title');
+    const resolvedSubtitle = subtitle ?? t('country.subtitle');
 
     const selectedCountry = useMemo(() => getCountryByCode(country), [country]);
 
@@ -95,7 +99,7 @@ export default function CountrySettings({
         updateCountrySetting(code)
             .catch((error: any) => {
                 setCountry(previousCountry);
-                Alert.alert('Country update failed', error?.message ?? 'Please try again.');
+                Alert.alert(tFn('country.updateFailed'), error?.message ?? tFn('common.tryAgain'));
             })
             .finally(() => setIsSyncing(false));
     };
@@ -129,8 +133,8 @@ export default function CountrySettings({
         <View className="px-5 pt-10">
             {showHeader ? (
                 <>
-                    <Text className="text-3xl font-bold text-gray-900 mb-2">{title}</Text>
-                    <Text className="text-gray-500 text-lg mb-6">{subtitle}</Text>
+                    <Text className="text-3xl font-bold text-gray-900 mb-2">{resolvedTitle}</Text>
+                    <Text className="text-gray-500 text-lg mb-6">{resolvedSubtitle}</Text>
                 </>
             ) : null}
 
@@ -141,9 +145,9 @@ export default function CountrySettings({
                 <View className="flex-row items-center flex-1 pr-3">
                     <Text className="mr-3 text-xl">{selectedCountry?.flag ?? '🌍'}</Text>
                     <View className="flex-1">
-                        <Text className="text-sm text-gray-500">Country / Region</Text>
+                        <Text className="text-sm text-gray-500">{t('country.label')}</Text>
                         <Text className="text-lg font-semibold text-gray-900">
-                            {selectedCountry?.label ?? 'Select a country'}
+                            {selectedCountry?.label ?? t('country.placeholder')}
                         </Text>
                     </View>
                 </View>
@@ -165,7 +169,7 @@ export default function CountrySettings({
 
                     <View className="absolute left-4 right-4 top-20 rounded-3xl bg-white p-4">
                         <View className="flex-row items-center justify-between mb-4">
-                            <Text className="text-xl font-semibold text-gray-900">Select country</Text>
+                            <Text className="text-xl font-semibold text-gray-900">{t('country.selectModalTitle')}</Text>
                             <TouchableOpacity
                                 onPress={() => setIsPickerOpen(false)}
                                 className="h-9 w-9 items-center justify-center rounded-full bg-gray-100"
@@ -177,7 +181,7 @@ export default function CountrySettings({
                         <TextInput
                             value={searchQuery}
                             onChangeText={setSearchQuery}
-                            placeholder="Search countries"
+                            placeholder={t('country.searchPlaceholder')}
                             autoCapitalize="none"
                             className="mb-4 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-900"
                         />
@@ -210,7 +214,7 @@ export default function CountrySettings({
                             }}
                             ListEmptyComponent={
                                 <View className="items-center rounded-2xl bg-gray-50 px-4 py-10">
-                                    <Text className="text-gray-500">No countries match your search.</Text>
+                                    <Text className="text-gray-500">{t('country.noMatch')}</Text>
                                 </View>
                             }
                         />

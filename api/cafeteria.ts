@@ -1,6 +1,6 @@
 import { requestJson } from '@/api/client';
 
-export type RiskLevel = 'high' | 'medium' | 'low';
+export type RiskLevel = 'safe' | 'low' | 'medium' | 'high' | 'danger';
 
 export interface ServerCafeteria {
     cafeteriaId: number;
@@ -69,12 +69,16 @@ export function mapServerRiskLevel(risk?: unknown): RiskLevel | null {
     if (!level) return null;
 
     switch (level.toUpperCase()) {
+        case 'DANGER':
+            return 'danger';
         case 'HIGH':
             return 'high';
         case 'MEDIUM':
             return 'medium';
         case 'LOW':
             return 'low';
+        case 'SAFE':
+            return 'safe';
         default:
             return null;
     }
@@ -118,6 +122,16 @@ export interface ServerMenuReview {
     count: number;
 }
 
+export interface ServerMenuIngredient {
+    code: string; // e.g., "OYSTER", "SOYBEAN" (ALLERGY_LIST의 apiCode와 동일)
+    source: string; // "AI" | (향후 다른 값)
+}
+
+export interface ServerMatchedAllergy {
+    allergyCode: string; // 사용자가 가진 알러지 코드 (e.g., "PORK")
+    ingredientCode: string | null; // 매칭된 식재료 코드 (없을 수 있음)
+}
+
 export interface ServerMenuDetail {
     mealMenuId: number;
     menuName: string;
@@ -126,9 +140,9 @@ export interface ServerMenuDetail {
     displayOrder: number;
     spicyLevel: number;
     aiAnalyzed: boolean;
-    risk: ServerMenuRisk; // { riskLevel: "HIGH"|"MEDIUM"|"LOW"|"UNKNOWN" }
-    ingredients: string[];
-    matchedAllergies: string[];
+    risk: ServerMenuRisk; // { riskLevel: "DANGER"|"HIGH"|"MEDIUM"|"LOW"|"SAFE"|"UNKNOWN" }
+    ingredients: ServerMenuIngredient[];
+    matchedAllergies: ServerMatchedAllergy[];
     like: ServerMenuLike;
     review: ServerMenuReview;
 }

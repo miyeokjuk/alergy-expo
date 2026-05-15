@@ -8,9 +8,11 @@ import { saveOnboardingProfile } from '@/api/onboarding';
 import { toAllergyCodes } from '@/constants/allergyList';
 import { toServerReligiousCode } from '@/data/religiousOptions';
 import { useState } from 'react';
+import { useTranslation, t as tFn } from '@/lib/i18n';
 
 
 export default function AllergyScreen() {
+    const t = useTranslation();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const language = useAppStore((state) => state.language);
     const country = useAppStore((state) => state.country);
@@ -23,7 +25,7 @@ export default function AllergyScreen() {
         if (isSubmitting) return;
 
         if (schoolId === null) {
-            Alert.alert('School missing', 'Please select your school before finishing onboarding.');
+            Alert.alert(tFn('onboarding.schoolMissing'), tFn('onboarding.schoolMissingMessage'));
             return;
         }
 
@@ -44,7 +46,7 @@ export default function AllergyScreen() {
             setHasCompletedOnboarding(true);
             router.replace('/main');
         } catch (error: any) {
-            Alert.alert('Onboarding failed', error?.message ?? 'Please try again.');
+            Alert.alert(tFn('onboarding.failed'), error?.message ?? tFn('common.tryAgain'));
         } finally {
             setIsSubmitting(false);
         }
@@ -57,10 +59,10 @@ export default function AllergyScreen() {
             </View>
             <View className="flex-row bg-white px-5 pt-4 gap-x-4 justify-center">
                 <ActionButton className="mb-5" onPress={() => router.back()}>
-                    Back
+                    {t('common.back')}
                 </ActionButton>
                 <ActionButton className="mb-5" disabled={isSubmitting} onPress={handleFinishOnboarding}>
-                    {isSubmitting ? 'Saving...' : 'Finish Onboarding'}
+                    {isSubmitting ? t('onboarding.finishing') : t('onboarding.finish')}
                 </ActionButton>
             </View>
         </SafeAreaView>

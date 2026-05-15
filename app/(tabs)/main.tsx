@@ -16,12 +16,13 @@ import {
     getCafeterias,
     getWeeklyMeals,
     mapServerRiskLevel,
-    MEAL_TYPE_LABEL,
     type ServerMealSchedule,
 } from '@/api/cafeteria';
+import { useTranslation } from '@/lib/i18n';
 
-// 메인 화면에 표시할 식당 순서 (왼쪽부터). 1·2번 cafeteriaId는 사용 안 하는 구식당.
-const DISPLAY_ORDER: number[] = [4, 5, 3]; // 일품식당, 정찬식당, 분식당
+// 메인 화면에 표시할 식당 순서 (왼쪽부터).
+// 서버 명세 갱신: cafeteriaId 1=일품, 2=정찬, 3=분식
+const DISPLAY_ORDER: number[] = [1, 2, 3];
 
 type DisplayedCafeteria = {
     cafeteriaId: number;
@@ -29,8 +30,8 @@ type DisplayedCafeteria = {
 };
 
 const FALLBACK_CAFETERIAS: DisplayedCafeteria[] = [
-    { cafeteriaId: 4, name: '일품식당' },
-    { cafeteriaId: 5, name: '정찬식당' },
+    { cafeteriaId: 1, name: '일품식당' },
+    { cafeteriaId: 2, name: '정찬식당' },
     { cafeteriaId: 3, name: '분식당' },
 ];
 
@@ -67,6 +68,7 @@ function getMondayOfWeek(date: Date): string {
 }
 
 export default function HomeScreen() {
+    const t = useTranslation();
     const allergies = useAppStore((state) => state.allergies);
     const normalizedAllergies = useMemo(
         () => Array.from(new Set(allergies.map((allergy) => normalizeAllergyValue(allergy)))),
@@ -233,10 +235,10 @@ export default function HomeScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white pt-5">
             <View className="px-5 items-center mb-6">
-                <Text className="text-3xl font-bold text-gray-800 mb-3">Today&apos;s Campus Menu 🍽️</Text>
+                <Text className="text-3xl font-bold text-gray-800 mb-3">{t('main.title')}</Text>
                 <View className="bg-red-100 px-4 py-2 rounded-full">
                     <Text className="text-red-600 font-semibold">
-                        Current filter: {normalizedAllergies.join(', ') || 'None'}
+                        {t('main.currentFilter')}: {normalizedAllergies.join(', ') || t('common.none')}
                     </Text>
                 </View>
             </View>
@@ -320,7 +322,7 @@ export default function HomeScreen() {
                                         isActive ? 'font-bold text-gray-900' : 'font-semibold text-gray-400'
                                     }`}
                                 >
-                                    {MEAL_TYPE_LABEL[mealType] ?? mealType}
+                                    {t(`meal.${mealType.toLowerCase()}`)}
                                 </Text>
                             </TouchableOpacity>
                         );
@@ -362,9 +364,9 @@ export default function HomeScreen() {
                             >
                                 {!schedule ? (
                                     <View className="rounded-3xl border border-dashed border-gray-300 bg-gray-50 px-5 py-10 items-center">
-                                        <Text className="text-gray-700 text-lg font-bold">식당 미운영</Text>
+                                        <Text className="text-gray-700 text-lg font-bold">{t('main.cafeteriaClosed')}</Text>
                                         <Text className="text-gray-400 text-sm mt-2">
-                                            {isWeeklyFetching ? 'Loading...' : 'No meals scheduled'}
+                                            {isWeeklyFetching ? t('common.loading') : t('main.noMealsScheduled')}
                                         </Text>
                                     </View>
                                 ) : (

@@ -6,8 +6,10 @@ import DeviceInfo from 'react-native-device-info';
 import { useAppStore } from "@/store/useAppStore";
 import './global.css';
 import {loginWithGoogleToken} from "@/api/auth";
+import { useTranslation, t as tFn } from '@/lib/i18n';
 
 export default function LoginScreen() {
+    const t = useTranslation();
     const setLoggedIn = useAppStore((state) => state.setLoggedIn);
     const setHasCompletedOnboarding = useAppStore((state) => state.setHasCompletedOnboarding);
     const resetProfile = useAppStore((state) => state.resetProfile);
@@ -51,7 +53,7 @@ export default function LoginScreen() {
                 console.log('The user closed the sign-in window.');
             }
             else {
-                Alert.alert('Sign-in failed', error.message || 'An error occurred while processing the request.');
+                Alert.alert(tFn('login.failedTitle'), error.message || tFn('login.failedMessage'));
                 console.error('Sign-in error:', error);
             }
         }
@@ -82,8 +84,8 @@ export default function LoginScreen() {
     return (
         <SafeAreaView className="flex-1 justify-center items-center bg-white px-8">
             <View className="items-center mb-16">
-                <Text className="text-4xl font-bold text-gray-900 mb-2">Allergy Safe</Text>
-                <Text className="text-gray-500 text-lg">A personalized meal menu for international students</Text>
+                <Text className="text-4xl font-bold text-gray-900 mb-2">{t('login.brand')}</Text>
+                <Text className="text-gray-500 text-lg">{t('login.tagline')}</Text>
             </View>
 
             <View className="w-3/5 gap-4">
@@ -101,14 +103,14 @@ export default function LoginScreen() {
                     onPress={handleGoogleLogin}
                     className="w-full h-[50px] bg-white border border-gray-300 rounded-2xl flex-row justify-center items-center active:bg-gray-400"
                 >
-                    <Text className="text-gray-900 font-semibold text-base">Continue with Google</Text>
+                    <Text className="text-gray-900 font-semibold text-base">{t('login.continueWithGoogle')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     onPress={()=>setLoggedIn(true)}
                     className="w-full h-[50px] bg-white border border-gray-300 rounded-2xl flex-row justify-center items-center active:bg-gray-400"
                 >
                     <Text className="text-gray-900 font-semibold text-base">
-                        Enter without sign-in (dev)
+                        {t('login.devEnter')}
                     </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -119,7 +121,7 @@ export default function LoginScreen() {
                     className="w-full h-[50px] bg-white border border-gray-300 rounded-2xl flex-row justify-center items-center active:bg-gray-400"
                 >
                     <Text className="text-gray-900 font-semibold text-base">
-                        Skip onboarding
+                        {t('login.devSkipOnboarding')}
                     </Text>
                 </TouchableOpacity>
             </View>

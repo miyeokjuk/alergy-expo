@@ -3,6 +3,7 @@ import { Alert, Text, View, TouchableOpacity } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/useAppStore';
 import { getLanguageSetting, updateLanguageSetting, getLanguageOptions } from '@/api/settings';
+import { useTranslation, t as tFn } from '@/lib/i18n';
 
 type LanguageOption = {
     code: string;
@@ -24,16 +25,19 @@ const DEFAULT_OPTIONS: LanguageOption[] = [
 ];
 
 export default function LanguageSettings({
-    title = 'Language',
-    subtitle = 'Select the language you want to use.',
+    title,
+    subtitle,
     options: optionsProp = DEFAULT_OPTIONS,
     showHeader = true,
     persistToServer = true,
 }: LanguageSettingsProps) {
+    const t = useTranslation();
     const language = useAppStore((state) => state.language);
     const setLanguage = useAppStore((state) => state.setLanguage);
     const queryClient = useQueryClient();
     const [isSyncing, setIsSyncing] = useState(false);
+    const resolvedTitle = title ?? t('language.title');
+    const resolvedSubtitle = subtitle ?? t('language.subtitle');
 
     const { data: languageOptionsResponse } = useQuery({
         queryKey: ['languageOptions'],
@@ -101,7 +105,7 @@ export default function LanguageSettings({
             queryClient.invalidateQueries();
         } catch (error: any) {
             setLanguage(previousLanguage);
-            Alert.alert('Language update failed', error?.message ?? 'Please try again.');
+            Alert.alert(tFn('language.updateFailed'), error?.message ?? tFn('common.tryAgain'));
         } finally {
             setIsSyncing(false);
         }
@@ -111,8 +115,8 @@ export default function LanguageSettings({
         <View className="px-5 pt-10">
             {showHeader ? (
                 <>
-                    <Text className="text-3xl font-bold text-gray-900 mb-2">{title}</Text>
-                    <Text className="text-gray-500 text-lg mb-10">{subtitle}</Text>
+                    <Text className="text-3xl font-bold text-gray-900 mb-2">{resolvedTitle}</Text>
+                    <Text className="text-gray-500 text-lg mb-10">{resolvedSubtitle}</Text>
                 </>
             ) : null}
 

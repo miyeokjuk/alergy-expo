@@ -3,6 +3,8 @@ import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-rout
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SecureStore from 'expo-secure-store';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { useAppStore } from '../store/useAppStore';
 import { verifyAndRestoreSession } from '@/api/auth';
 import { setOnAuthExpired } from '@/api/client';
@@ -88,7 +90,13 @@ export default function RootLayout() {
             router.replace('/');
         } else if (isLoggedIn && !hasCompletedOnboarding && !inAuthGroup) {
             router.replace('/onboarding/language');
-        } else if (isLoggedIn && hasCompletedOnboarding && !inTabsGroup && !inSettingsGroup && !inMealDetailGroup) {
+        } else if (
+            isLoggedIn &&
+            hasCompletedOnboarding &&
+            !inTabsGroup &&
+            !inSettingsGroup &&
+            !inMealDetailGroup
+        ) {
             router.replace('/main');
         }
 
@@ -97,13 +105,17 @@ export default function RootLayout() {
     }, [hasCompletedOnboarding, hasHydrated, isAppReady, isLoggedIn, rootNavigationState?.key, router, segments]);
 
     return (
-        <QueryClientProvider client={queryClient}>
-            <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="onboarding" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="meal-detail" options={{ animation: 'slide_from_right' }} />
-            </Stack>
-        </QueryClientProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <BottomSheetModalProvider>
+                <QueryClientProvider client={queryClient}>
+                    <Stack screenOptions={{ headerShown: false }}>
+                        <Stack.Screen name="index" />
+                        <Stack.Screen name="onboarding" />
+                        <Stack.Screen name="(tabs)" />
+                        <Stack.Screen name="meal-detail" options={{ animation: 'slide_from_right' }} />
+                    </Stack>
+                </QueryClientProvider>
+            </BottomSheetModalProvider>
+        </GestureHandlerRootView>
     );
 }

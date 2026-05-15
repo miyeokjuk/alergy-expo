@@ -1,7 +1,9 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '@/lib/i18n';
 
 export default function TabsLayout() {
+    const t = useTranslation();
     return (
         <Tabs
             screenOptions={{
@@ -10,12 +12,10 @@ export default function TabsLayout() {
                 tabBarInactiveTintColor: '#9CA3AF',
             }}
         >
-
             <Tabs.Screen
                 name="main"
                 options={{
-                    title: 'Menu',
-                    // color  Active/Inactive 색상을 자동으로 받음
+                    title: t('tab.menu'),
                     tabBarIcon: ({ color }) => (
                         <Ionicons name="fast-food-outline" size={24} color={color} />
                     ),
@@ -25,18 +25,17 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="translate"
                 options={{
-                    title: 'Translate',
+                    title: t('tab.translate'),
                     tabBarIcon: ({ color }) => (
                         <Ionicons name="chatbubble-ellipses-outline" size={24} color={color} />
                     ),
                 }}
             />
 
-            {/* 2. 두 번째 탭: 설정 화면 */}
             <Tabs.Screen
                 name="settings"
                 options={{
-                    title: 'Settings',
+                    title: t('tab.settings'),
                     tabBarIcon: ({ color }) => (
                         <Ionicons name="settings-outline" size={24} color={color} />
                     ),

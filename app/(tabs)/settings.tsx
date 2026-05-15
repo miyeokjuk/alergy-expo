@@ -7,16 +7,19 @@ import { ActionButton } from '@/components/ui/action-button';
 import * as SecureStore from 'expo-secure-store';
 import { logoutFromServer } from '@/api/auth';
 import { getWeeklyMeals } from '@/api/cafeteria';
-const SETTINGS_MENU = [
-    { id: 'country', title: 'Country Settings', icon: 'earth-outline', path: '/settings/country' },
-    { id: 'school', title: 'School Settings', icon: 'school-outline', path: '/settings/school' },
-    { id: 'allergy', title: 'Allergy Settings', icon: 'shield-checkmark-outline', path: '/settings/allergy' },
-    { id: 'language', title: 'Language Settings', icon: 'language-outline', path: '/settings/language' },
-];
+import { useTranslation } from '@/lib/i18n';
 
 export default function SettingsScreen() {
     const setLoggedIn = useAppStore((state) => state.setLoggedIn);
     const resetProfile = useAppStore((state) => state.resetProfile);
+    const t = useTranslation();
+
+    const SETTINGS_MENU = [
+        { id: 'country', title: t('settings.country'), icon: 'earth-outline', path: '/settings/country' },
+        { id: 'school', title: t('settings.school'), icon: 'school-outline', path: '/settings/school' },
+        { id: 'allergy', title: t('settings.allergy'), icon: 'shield-checkmark-outline', path: '/settings/allergy' },
+        { id: 'language', title: t('settings.language'), icon: 'language-outline', path: '/settings/language' },
+    ];
 
     const handleLogout = async () => {
         try {
@@ -48,7 +51,7 @@ export default function SettingsScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white">
             <View className="px-5 py-6">
-                <Text className="text-2xl font-bold text-gray-800 mb-8">Settings</Text>
+                <Text className="text-2xl font-bold text-gray-800 mb-8">{t('settings.title')}</Text>
 
                 <ScrollView className="space-y-4">
                     {SETTINGS_MENU.map((menu) => (
@@ -71,7 +74,7 @@ export default function SettingsScreen() {
                     Weekly
                 </ActionButton>
                 <ActionButton onPress={handleLogout}>
-                    Log Out
+                    {t('settings.logOut')}
                 </ActionButton>
             </View>
         </SafeAreaView>
