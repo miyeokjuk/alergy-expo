@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useMemo, useState } from 'react';
+import { forwardRef, memo, useCallback, useMemo, useState } from 'react';
 import { Alert, ActivityIndicator, Platform, Text, TouchableOpacity, View } from 'react-native';
 import {
     BottomSheetModal,
@@ -71,10 +71,6 @@ const ReviewsBottomSheet = forwardRef<BottomSheetModal, Props>(
         const allReviews: ServerReview[] =
             data?.pages.flatMap((page) => page?.data?.reviews ?? []) ?? [];
 
-        // 작성 폼 상태
-        const [newContent, setNewContent] = useState('');
-        const [isSubmitting, setIsSubmitting] = useState(false);
-
         // 인라인 수정 상태
         const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
         const [editingContent, setEditingContent] = useState('');
@@ -84,24 +80,11 @@ const ReviewsBottomSheet = forwardRef<BottomSheetModal, Props>(
             queryClient.invalidateQueries({ queryKey: ['menuDetail', mealMenuId] });
         }, [queryClient, mealMenuId]);
 
-        const handleSubmit = async () => {
-            const trimmed = newContent.trim();
-            if (!trimmed || isSubmitting) return;
-            setIsSubmitting(true);
-            try {
-                await createReview(mealMenuId, trimmed);
-                setNewContent('');
-                await refetch();
-                invalidateMenuDetail();
-            } catch (error: any) {
-                Alert.alert(
-                    tFn('review.createFailed'),
-                    error?.message ?? tFn('common.tryAgain')
-                );
-            } finally {
-                setIsSubmitting(false);
-            }
-        };
+        // 작성 후처리(목록 갱신 + 메뉴 상세 리뷰 카운트 갱신)
+        const handleAfterCreate = useCallback(async () => {
+            await refetch();
+            invalidateMenuDetail();
+        }, [refetch, invalidateMenuDetail]);
 
         const handleEditStart = (review: ServerReview) => {
             setEditingReviewId(review.reviewId);
@@ -226,66 +209,21 @@ const ReviewsBottomSheet = forwardRef<BottomSheetModal, Props>(
 
         // 입력창을 시트 하단에 항상 고정. 리뷰가 없거나 많거나 무관.
         // BottomSheetFooter는 시트 내부 absolute 위치를 자동 계산하며, 키보드 등장 시 함께 올라간다.
+        //
+        // ⚠️ renderFooter 콜백의 의존성에 입력값 state를 넣으면 글자 입력마다
+        // footerComponent 가 unmount/remount 되어 IME 포커스가 풀린다 (한글 첫 자만 입력되는 버그).
+        // → 입력 state는 ReviewComposer 내부에서 관리하고, renderFooter 는 안정 prop만 받는다.
         const renderFooter = useCallback(
             (props: BottomSheetFooterProps) => (
                 <BottomSheetFooter {...props} bottomInset={0}>
-                    <View
-                        style={{
-                            borderTopWidth: 1,
-                            borderTopColor: '#F3F4F6',
-                            backgroundColor: 'white',
-                            paddingHorizontal: 16,
-                            paddingTop: 12,
-                            paddingBottom: 12 + insets.bottom,
-                            flexDirection: 'row',
-                            alignItems: 'flex-end',
-                            gap: 8,
-                        }}
-                    >
-                        <BottomSheetTextInput
-                            value={newContent}
-                            onChangeText={setNewContent}
-                            placeholder={t('review.placeholder')}
-                            placeholderTextColor="#9CA3AF"
-                            multiline
-                            style={{
-                                flex: 1,
-                                minHeight: 44,
-                                maxHeight: 120,
-                                borderRadius: 24,
-                                backgroundColor: '#F3F4F6',
-                                paddingHorizontal: 16,
-                                paddingTop: Platform.OS === 'ios' ? 12 : 10,
-                                paddingBottom: Platform.OS === 'ios' ? 12 : 10,
-                                fontSize: 16,
-                                color: '#111827',
-                                lineHeight: 20,
-                            }}
-                        />
-                        <TouchableOpacity
-                            onPress={handleSubmit}
-                            disabled={isSubmitting || !newContent.trim()}
-                            style={{
-                                height: 44,
-                                paddingHorizontal: 20,
-                                borderRadius: 24,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backgroundColor:
-                                    isSubmitting || !newContent.trim()
-                                        ? '#93C5FD'
-                                        : '#3B82F6',
-                            }}
-                        >
-                            <Text className="text-white font-semibold text-base">
-                                {t('review.send')}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
+                    <ReviewComposer
+                        mealMenuId={mealMenuId}
+                        insetBottom={insets.bottom}
+                        onCreated={handleAfterCreate}
+                    />
                 </BottomSheetFooter>
             ),
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-            [newContent, isSubmitting, insets.bottom, t]
+            [mealMenuId, insets.bottom, handleAfterCreate]
         );
 
         const renderItem = ({ item: review }: { item: ServerReview }) => {
@@ -473,5 +411,99 @@ const ReviewsBottomSheet = forwardRef<BottomSheetModal, Props>(
 );
 
 ReviewsBottomSheet.displayName = 'ReviewsBottomSheet';
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * ReviewComposer — 시트 footer에 들어가는 입력창.
+ * 자체 state로 입력을 관리해서, 글자 입력마다 부모(renderFooter)가
+ * 다시 렌더되지 않도록 격리한다 (IME 한글 입력 안정성 확보).
+ * ────────────────────────────────────────────────────────────────────────── */
+interface ReviewComposerProps {
+    mealMenuId: number;
+    insetBottom: number;
+    onCreated: () => void | Promise<void>;
+}
+
+const ReviewComposer = memo(function ReviewComposer({
+    mealMenuId,
+    insetBottom,
+    onCreated,
+}: ReviewComposerProps) {
+    const t = useTranslation();
+    const [content, setContent] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    const submit = async () => {
+        const trimmed = content.trim();
+        if (!trimmed || submitting) return;
+        setSubmitting(true);
+        try {
+            await createReview(mealMenuId, trimmed);
+            setContent('');
+            await onCreated();
+        } catch (error: any) {
+            Alert.alert(
+                tFn('review.createFailed'),
+                error?.message ?? tFn('common.tryAgain')
+            );
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const disabled = submitting || !content.trim();
+
+    return (
+        <View
+            style={{
+                borderTopWidth: 1,
+                borderTopColor: '#F3F4F6',
+                backgroundColor: 'white',
+                paddingHorizontal: 16,
+                paddingTop: 12,
+                paddingBottom: 12 + insetBottom,
+                flexDirection: 'row',
+                alignItems: 'flex-end',
+                gap: 8,
+            }}
+        >
+            <BottomSheetTextInput
+                value={content}
+                onChangeText={setContent}
+                placeholder={t('review.placeholder')}
+                placeholderTextColor="#9CA3AF"
+                multiline
+                style={{
+                    flex: 1,
+                    minHeight: 44,
+                    maxHeight: 120,
+                    borderRadius: 24,
+                    backgroundColor: '#F3F4F6',
+                    paddingHorizontal: 16,
+                    paddingTop: Platform.OS === 'ios' ? 12 : 10,
+                    paddingBottom: Platform.OS === 'ios' ? 12 : 10,
+                    fontSize: 16,
+                    color: '#111827',
+                    lineHeight: 20,
+                }}
+            />
+            <TouchableOpacity
+                onPress={submit}
+                disabled={disabled}
+                style={{
+                    height: 44,
+                    paddingHorizontal: 20,
+                    borderRadius: 24,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: disabled ? '#93C5FD' : '#3B82F6',
+                }}
+            >
+                <Text className="text-white font-semibold text-base">
+                    {t('review.send')}
+                </Text>
+            </TouchableOpacity>
+        </View>
+    );
+});
 
 export default ReviewsBottomSheet;
