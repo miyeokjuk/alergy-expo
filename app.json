@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.chickenkawa.allergy"
+      "bundleIdentifier": "com.chickenkawa.allergy",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera to scan food and detect ingredients."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -35,6 +38,12 @@
         }
       ],
       "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan food and detect ingredients."
+        }
+      ],
       [
         "expo-splash-screen",
         {

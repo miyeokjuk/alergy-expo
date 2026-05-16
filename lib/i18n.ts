@@ -5,7 +5,7 @@ type LangCode = 'en' | 'ko';
 
 type TranslationDict = Record<string, string>;
 
-// ─── 영어 사전 ───
+// ─── 영어 ───
 const en: TranslationDict = {
     // 공통
     'common.back': 'Back',
@@ -43,7 +43,22 @@ const en: TranslationDict = {
     // 탭
     'tab.menu': 'Menu',
     'tab.translate': 'Translate',
+    'tab.camera': 'Scan',
     'tab.settings': 'Settings',
+
+    // 카메라 (음식 스캔)
+    'camera.title': 'Scan Food',
+    'camera.subtitle': 'AI detects ingredients from your food photo',
+    'camera.permission.title': 'Camera permission required',
+    'camera.permission.message':
+        'Allow camera access to scan food and detect ingredients.',
+    'camera.permission.grant': 'Grant permission',
+    'camera.permission.openSettings': 'Open Settings',
+    'camera.capture': 'Capture',
+    'camera.retake': 'Retake',
+    'camera.analyze': 'Analyze',
+    'camera.flipCamera': 'Flip camera',
+    'camera.comingSoon': 'AI analysis coming soon',
 
     // 메인
     'main.title': "Today's Campus Menu 🍽️",
@@ -151,7 +166,7 @@ const en: TranslationDict = {
     'a11y.goBack': 'Go back',
 };
 
-// ─── 한국어 사전 ───
+// ─── 한국어 ───
 const ko: TranslationDict = {
     'common.back': '뒤로',
     'common.next': '다음',
@@ -185,7 +200,22 @@ const ko: TranslationDict = {
 
     'tab.menu': '메뉴',
     'tab.translate': '번역',
+    'tab.camera': '스캔',
     'tab.settings': '설정',
+
+    // 카메라 (음식 스캔)
+    'camera.title': '음식 스캔',
+    'camera.subtitle': '음식을 스캔하면 ai가 식재료를 분석합니다',
+    'camera.permission.title': '카메라 권한이 필요합니다',
+    'camera.permission.message':
+        '음식 스캔과 재료 인식을 위해 카메라 접근을 허용해 주세요.',
+    'camera.permission.grant': '권한 허용',
+    'camera.permission.openSettings': '설정 열기',
+    'camera.capture': '촬영',
+    'camera.retake': '다시 찍기',
+    'camera.analyze': '분석하기',
+    'camera.flipCamera': '카메라 전환',
+    'camera.comingSoon': 'AI 분석은 곧 제공됩니다',
 
     'main.title': '오늘의 캠퍼스 메뉴 🍽️',
     'main.currentFilter': '현재 필터',

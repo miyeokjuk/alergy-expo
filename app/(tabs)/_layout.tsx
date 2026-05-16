@@ -33,6 +33,16 @@ export default function TabsLayout() {
             />
 
             <Tabs.Screen
+                name="camera"
+                options={{
+                    title: t('tab.camera'),
+                    tabBarIcon: ({ color }) => (
+                        <Ionicons name="camera-outline" size={24} color={color} />
+                    ),
+                }}
+            />
+
+            <Tabs.Screen
                 name="settings"
                 options={{
                     title: t('tab.settings'),
