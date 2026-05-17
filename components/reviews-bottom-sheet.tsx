@@ -1,4 +1,4 @@
-import { forwardRef, memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState, type Ref } from 'react';
 import { Alert, ActivityIndicator, Platform, Text, TouchableOpacity, View } from 'react-native';
 import {
     BottomSheetModal,
@@ -34,17 +34,19 @@ const PAGE_SIZE = 20;
 
 interface Props {
     mealMenuId: number;
+    // React 19부터는 ref도 일반 prop처럼 받는다. forwardRef 불필요.
+    ref?: Ref<BottomSheetModal>;
 }
 
-const ReviewsBottomSheet = forwardRef<BottomSheetModal, Props>(
-    ({ mealMenuId }, ref) => {
+function ReviewsBottomSheet({ mealMenuId, ref }: Props) {
         const t = useTranslation();
         const queryClient = useQueryClient();
         const insets = useSafeAreaInsets();
 
         // 입력창은 footerComponent로 항상 시트 하단에 고정되므로,
-        // 시트 자체는 70% / 95% 두 단계로 충분.
-        const snapPoints = useMemo(() => ['70%', '95%'], []);
+        // 시트 자체는 50% / 85% 두 단계로 충분.
+        // ⚠️ enableDynamicSizing=false 와 함께 써야 snap이 strict하게 지켜진다.
+        const snapPoints = useMemo(() => ['50%', '85%'], []);
         // FlatList 마지막 항목이 입력창 뒤로 숨지 않도록 패딩 확보용 footer 높이 추정.
         const FOOTER_HEIGHT = 64;
         const reviewsKey = ['reviews', mealMenuId] as const;
@@ -350,6 +352,14 @@ const ReviewsBottomSheet = forwardRef<BottomSheetModal, Props>(
                 snapPoints={snapPoints}
                 index={0}
                 enablePanDownToClose
+                // strict snap: 콘텐츠 크기에 맞춰 시트가 임의로 커지지 않도록.
+                // 이 옵션 없으면 v5 기본값(true)이라 snapPoints가 사실상 max로만 동작.
+                enableDynamicSizing={false}
+                // 콘텐츠 영역 드래그 = 스크롤 (시트 이동은 핸들/헤더로만).
+                // 이게 false라야 50%/85% 어느 위치에서든 리뷰 목록이 바로 스크롤됨.
+                enableContentPanningGesture={false}
+                // 상단 status bar 영역 침범 방지.
+                topInset={insets.top}
                 keyboardBehavior="interactive"
                 keyboardBlurBehavior="restore"
                 backdropComponent={renderBackdrop}
@@ -407,10 +417,7 @@ const ReviewsBottomSheet = forwardRef<BottomSheetModal, Props>(
                 />
             </BottomSheetModal>
         );
-    }
-);
-
-ReviewsBottomSheet.displayName = 'ReviewsBottomSheet';
+}
 
 /* ──────────────────────────────────────────────────────────────────────────
  * ReviewComposer — 시트 footer에 들어가는 입력창.
