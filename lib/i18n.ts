@@ -327,10 +327,10 @@ function interpolate(template: string, params?: Record<string, string | number>)
     return out;
 }
 
-export type TFunction = (key: string, params?: Record<string, string | number>) => string;
+export type TFunc= (key: string, params?: Record<string, string | number>) => string;
 
 // 컴포넌트에서 사용: 언어 변경 시 자동 re-render됨
-export function useTranslation(): TFunction {
+export function useTranslation(): TFunc {
     const language = useAppStore((state) => state.language);
     const lang = resolveLang(language);
     return (key, params) => {

@@ -109,9 +109,6 @@ export default function RootLayout() {
             <BottomSheetModalProvider>
                 <QueryClientProvider client={queryClient}>
                     <Stack screenOptions={{ headerShown: false }}>
-                        <Stack.Screen name="index" />
-                        <Stack.Screen name="onboarding" />
-                        <Stack.Screen name="(tabs)" />
                         <Stack.Screen name="meal-detail" options={{ animation: 'slide_from_right' }} />
                     </Stack>
                 </QueryClientProvider>

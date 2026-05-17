@@ -20,7 +20,6 @@ interface LanguageSettingsProps {
 
 const DEFAULT_OPTIONS: LanguageOption[] = [
     { code: 'en', label: 'English' },
-    { code: 'ja', label: '日本語' },
     { code: 'ko', label: '한국어' },
 ];
 
