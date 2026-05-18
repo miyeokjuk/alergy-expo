@@ -2,17 +2,14 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {useAppStore} from "@/store/useAppStore";
 import { ActionButton } from '@/components/ui/action-button';
-import * as SecureStore from 'expo-secure-store';
-import { logoutFromServer } from '@/api/auth';
 import { getWeeklyMeals } from '@/api/cafeteria';
 import { useTranslation } from '@/lib/i18n';
+import { useSignOut } from '@/hooks/useSignOut';
 
 export default function SettingsScreen() {
-    const setLoggedIn = useAppStore((state) => state.setLoggedIn);
-    const resetProfile = useAppStore((state) => state.resetProfile);
     const t = useTranslation();
+    const handleLogout = useSignOut();
 
     const SETTINGS_MENU = [
         { id: 'country', title: t('settings.country'), icon: 'earth-outline', path: '/settings/country' },
@@ -20,17 +17,6 @@ export default function SettingsScreen() {
         { id: 'allergy', title: t('settings.allergy'), icon: 'shield-checkmark-outline', path: '/settings/allergy' },
         { id: 'language', title: t('settings.language'), icon: 'language-outline', path: '/settings/language' },
     ];
-
-    const handleLogout = async () => {
-        try {
-            await logoutFromServer();
-            await SecureStore.deleteItemAsync('accessToken');
-            await SecureStore.deleteItemAsync('refreshToken');
-        } finally {
-            resetProfile();
-            setLoggedIn(false);
-        }
-    };
 
     const handleLoadWeekly = async () => {
         try {

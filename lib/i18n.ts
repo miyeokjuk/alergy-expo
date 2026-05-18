@@ -39,6 +39,11 @@ const en: TranslationDict = {
     'onboarding.schoolMissing': 'School missing',
     'onboarding.schoolMissingMessage': 'Please select your school before finishing onboarding.',
     'onboarding.failed': 'Onboarding failed',
+    'onboarding.signOutHint': 'Use a different account',
+    'onboarding.signOutConfirm': 'Sign out?',
+    'onboarding.signOutConfirmMessage':
+        'You will need to sign in again. Your progress so far is not saved yet.',
+    'common.signOut': 'Sign out',
 
     // 탭
     'tab.menu': 'Menu',
@@ -197,6 +202,10 @@ const ko: TranslationDict = {
     'onboarding.schoolMissing': '학교 미선택',
     'onboarding.schoolMissingMessage': '온보딩을 완료하기 전에 학교를 선택해 주세요.',
     'onboarding.failed': '온보딩 실패',
+    'onboarding.signOutHint': '다른 계정으로 로그인',
+    'onboarding.signOutConfirm': '로그아웃 하시겠어요?',
+    'onboarding.signOutConfirmMessage': '다시 로그인해야 합니다. 지금까지 입력한 내용은 저장되지 않습니다.',
+    'common.signOut': '로그아웃',
 
     'tab.menu': '메뉴',
     'tab.translate': '번역',
